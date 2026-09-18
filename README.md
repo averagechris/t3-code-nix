@@ -153,6 +153,48 @@ Source-built macOS applications are unsigned. Source builds also omit
 upstream's private release credentials and production cloud configuration, so
 T3 Connect may be unavailable until upstream documents reusable public values.
 
+### Build a client and server from another revision
+
+`lib.mkSourcePackages` builds both applications from one explicitly supplied
+source tree. This is useful for forks and unreleased revisions while keeping
+the web client and server protocol in sync:
+
+```nix
+{
+  inputs.t3code-src = {
+    url = "github:averagechris/t3code/<revision>";
+    flake = false;
+  };
+
+  outputs = { nixpkgs, t3-code-nix, t3code-src, ... }:
+    let
+      pkgs = import nixpkgs { system = "aarch64-darwin"; };
+      custom = t3-code-nix.lib.mkSourcePackages pkgs {
+        src = t3code-src;
+        version = "0.0.43-opencode2";
+        pnpmHash = "sha256-...";
+        cargoHash = "sha256-...";
+        pnpmVersion = "11.10.0";
+        electronVersion = "44.1.0";
+      };
+    in {
+      # Pass this module to home-manager.lib.homeManagerConfiguration.
+      homeModules.custom-t3code = {
+        programs.t3code.package = custom.client;
+        services.t3code = {
+          package = custom.server;
+          # This package must provide an OpenCode 2 CLI.
+          providerPackages = [ pkgs.opencode ];
+        };
+      };
+    };
+}
+```
+
+Use the dependency hashes reported by the first build attempt. Both wrappers
+continue to disable T3 Code auto-update. Direct package overrides are existing
+Home Manager API, so stable and nightly channel selection is unchanged.
+
 ## Updates
 
 GitHub Actions checks both channels at minute 17 of every hour. Upstream checks

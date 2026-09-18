@@ -20,16 +20,21 @@
   writeDarwinBundle,
   xcbuild,
   release,
+  source ? null,
 }:
 let
   appName = "T3 Code (Alpha)";
   pnpm = pnpm_11;
-  src = fetchFromGitHub {
-    owner = "pingdotgg";
-    repo = "t3code";
-    inherit (release) tag;
-    hash = release.srcHash;
-  };
+  src =
+    if source != null then
+      source
+    else
+      fetchFromGitHub {
+        owner = "pingdotgg";
+        repo = "t3code";
+        inherit (release) tag;
+        hash = release.srcHash;
+      };
   spdxLicenseData = fetchFromGitHub {
     owner = "spdx";
     repo = "license-list-data";
@@ -179,9 +184,11 @@ stdenv.mkDerivation (finalAttrs: {
   meta = {
     description = "T3 Code client and server built from source";
     homepage = "https://t3.codes";
-    changelog = "https://github.com/pingdotgg/t3code/releases/tag/${release.tag}";
     license = lib.licenses.mit;
     mainProgram = "t3code";
     inherit (nodejs_24.meta) platforms;
+  }
+  // lib.optionalAttrs (release ? tag) {
+    changelog = "https://github.com/pingdotgg/t3code/releases/tag/${release.tag}";
   };
 })
