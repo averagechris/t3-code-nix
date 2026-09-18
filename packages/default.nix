@@ -11,21 +11,7 @@ let
       serverName = if isStable then "t3code-server" else "t3code-server-nightly";
       sourceClientName = if isStable then "t3code-source" else "t3code-nightly-source";
       sourceServerName = if isStable then "t3code-server-source" else "t3code-server-nightly-source";
-      electronPackage = "electron_${lib.versions.major release.electronVersion}";
-      electron =
-        pkgs.${electronPackage}
-          or (throw "T3 Code ${release.version} requires ${electronPackage}, which is missing from nixpkgs");
-
-      sourceUnwrapped = pkgs.callPackage ./source/unwrapped.nix { inherit electron release; };
-      resourceMonitor = pkgs.callPackage ./source/resource-monitor.nix {
-        inherit release sourceUnwrapped;
-      };
-      sourceClient = pkgs.callPackage ./source/client.nix {
-        inherit release resourceMonitor sourceUnwrapped;
-      };
-      sourceServer = pkgs.callPackage ./source/server.nix {
-        inherit release resourceMonitor sourceUnwrapped;
-      };
+      sourcePackages = import ./source { inherit pkgs release; };
       prebuiltServer = pkgs.callPackage ./prebuilt-server.nix {
         inherit channel release;
         npmLock = if isStable then ./npm/stable/package-lock.json else ./npm/nightly/package-lock.json;
@@ -35,8 +21,8 @@ let
     in
     {
       ${serverName} = prebuiltServer;
-      ${sourceClientName} = sourceClient;
-      ${sourceServerName} = sourceServer;
+      ${sourceClientName} = sourcePackages.client;
+      ${sourceServerName} = sourcePackages.server;
     }
     // lib.optionalAttrs hasPrebuiltClient {
       ${clientName} = prebuiltClient;

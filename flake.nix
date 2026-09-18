@@ -61,5 +61,29 @@
       #   - mySimpleModule.nix
       #   - _not_a_module.nix
       imports = loadParts ./flake-parts;
+
+      flake.lib.mkSourcePackages =
+        pkgs:
+        {
+          src,
+          version,
+          pnpmHash,
+          cargoHash,
+          pnpmVersion,
+          electronVersion,
+        }:
+        import ./packages/source {
+          inherit pkgs;
+          source = src;
+          release = {
+            inherit
+              version
+              pnpmHash
+              cargoHash
+              pnpmVersion
+              electronVersion
+              ;
+          };
+        };
     };
 }

@@ -7,7 +7,8 @@ rustPlatform.buildRustPackage {
   pname = "t3code-resource-monitor";
   inherit (release) version;
   inherit (sourceUnwrapped) src;
-  sourceRoot = "${sourceUnwrapped.src.name}/native/resource-monitor";
+  cargoRoot = "native/resource-monitor";
+  buildAndTestSubdir = "native/resource-monitor";
   cargoHash = release.cargoHash;
   noAuditTmpdir = true;
   meta = sourceUnwrapped.meta // {

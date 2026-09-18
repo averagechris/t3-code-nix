@@ -58,6 +58,20 @@
             unsupported = mkHome { programs.t3code.enable = true; };
           in
           !(builtins.tryEval unsupported.activationPackage.drvPath).success;
+      customPackages = self.lib.mkSourcePackages pkgs {
+        src = ../.;
+        version = "0.0.0-custom-check";
+        pnpmHash = lib.fakeHash;
+        cargoHash = lib.fakeHash;
+        pnpmVersion = "11.10.0";
+        electronVersion = "44.1.0";
+      };
+      customPackagesEvaluate = builtins.deepSeq [
+        customPackages.client.drvPath
+        customPackages.client.resourceMonitor.drvPath
+        customPackages.server.drvPath
+        customPackages.server.resourceMonitor.drvPath
+      ] true;
     in
     {
       checks.home-module =
@@ -65,6 +79,7 @@
         assert mismatchRejected;
         assert serviceDefined;
         assert unsupportedArmPrebuiltRejected;
+        assert customPackagesEvaluate;
         pkgs.runCommand "t3code-home-module-evaluation" { } "touch $out";
     };
 }
