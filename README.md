@@ -381,6 +381,11 @@ The flake check also evaluates the Home Manager modules on Darwin. Its
 `opencode-v2` CI job builds these same three aarch64-darwin attributes, checks
 that the client and server versions match, checks the locked OpenCode version,
 and verifies that both wrappers contain `T3CODE_DISABLE_AUTO_UPDATE`.
+Confirm the fork actually registers the workflow with
+`gh workflow list -R averagechris/t3-code-nix` before relying on CI. If the
+list is empty or no run appears for the feature branch, the local builds and
+flake check above are the only verification; enabling fork Actions and getting
+a passing run remains a separate step.
 
 If there is no Nix drift, the rebase is a no-op when `opencode-v2-pin` is
 already based on the latest `main@upstream`; this does not mutate `main` or
