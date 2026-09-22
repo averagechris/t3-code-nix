@@ -3,11 +3,43 @@ name: flake check
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, opencode-v2-pin]
   pull_request:
     types: [opened, reopened, synchronize]
 
 jobs:
+  opencode-v2:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/opencode-v2-pin') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/opencode-v2-pin') ||
+      (github.event_name == 'pull_request' && github.base_ref == 'opencode-v2-pin')
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: accept-flake-config = true
+      - name: Build OpenCode 2 packages
+        run: |
+          system=aarch64-darwin
+          packages='opencode-v2 t3code-opencode-v2 t3code-server-opencode-v2'
+          for package in $packages; do
+            nix build --no-link ".#packages.$system.$package"
+          done
+      - name: Check sources, versions, and wrappers
+        run: |
+          system=aarch64-darwin
+          client=".#packages.$system.t3code-opencode-v2"
+          server=".#packages.$system.t3code-server-opencode-v2"
+          test "$(nix eval --raw "$client.version")" = "$(nix eval --raw "$server.version")"
+          ref="$(jq -r '.nodes."opencode-v2-src".original.ref | sub("^v"; "")' flake.lock)"
+          rev="$(jq -r '.nodes."opencode-v2-src".locked.rev[0:7]' flake.lock)"
+          test "$(nix eval --raw ".#packages.$system.opencode-v2.version")" = "$ref+$rev"
+          for package in t3code-opencode-v2 t3code-server-opencode-v2; do
+            output="$(nix build --no-link --print-out-paths ".#packages.$system.$package")"
+            grep -R -a -q 'T3CODE_DISABLE_AUTO_UPDATE' "$output/bin"
+          done
+
   evaluate:
     runs-on: ubuntu-24.04
     steps:

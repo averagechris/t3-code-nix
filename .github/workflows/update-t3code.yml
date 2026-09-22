@@ -13,6 +13,7 @@ on:
 
 jobs:
   update:
+    if: github.ref == 'refs/heads/main'
     strategy:
       fail-fast: false
       matrix:
@@ -33,6 +34,7 @@ jobs:
         with:
           token: ${{ secrets.T3CODE_UPDATE_TOKEN }}
           branch: automation/update-${{ matrix.channel }}
+          base: main
           delete-branch: false
           commit-message: "chore: update T3 Code ${{ matrix.channel }}"
           title: "chore: update T3 Code ${{ matrix.channel }}"

@@ -224,7 +224,7 @@ Home Manager API, so stable and nightly channel selection is unchanged.
 
 ## Updates
 
-GitHub Actions checks both channels at minute 17 of every hour. Upstream checks
+The main branch's GitHub Actions updater checks both channels at minute 17 of every hour. Upstream checks
 nightly releases every three hours, so a complete release normally appears
 here within one additional hour. GitHub schedules are best effort.
 
@@ -245,3 +245,181 @@ The workflow expects `T3CODE_UPDATE_TOKEN`: a GitHub App installation token or
 fine-grained bot token with repository contents and pull request write access.
 
 The weekly flake-input workflow remains separate from T3 Code release updates.
+
+### OpenCode 2 pin maintenance
+
+The OpenCode 2 fork is a manual pin. It does not use the hourly updater or
+auto-merge. Use `gh auth status` before checking the published fork. Keep the
+T3 and Nix work separate:
+
+1. Start in the Bay T3 feature workspace, the workspace that contains the
+   `opencode-v2` bookmark, for T3 commands.
+2. Start in the Bay Nix feature workspace, the workspace based on
+   `opencode-v2-pin`, for Nix commands.
+
+Do not run either procedure from an unrelated checkout. The commands below do
+not depend on a particular Bay path.
+
+#### Refresh and verify the T3 feature commit
+
+Run this block in the Bay T3 feature workspace. Check the remotes once. If
+`upstream` is already listed, do not add it again.
+
+```sh
+jj status
+jj git remote list
+```
+
+If the remote list has no `upstream` entry, add it once and rerun the fetch:
+
+```sh
+jj git remote add upstream https://github.com/pingdotgg/t3code.git
+```
+
+Then fetch only upstream `main` and rebase the feature commit:
+
+```sh
+jj git fetch --remote upstream --branch main
+jj log -r 'main@upstream ~ ancestors(opencode-v2)' -n 12 \
+  --no-pager --color=never
+jj rebase -r opencode-v2 -d main@upstream
+jj new opencode-v2
+```
+
+The log is read-only. Review those commits before rebasing so upstream drift is
+visible instead of being folded into the feature commit without review.
+
+`-r` rebases only the `opencode-v2` commit. It does not move unrelated
+descendants, so `jj new opencode-v2` makes the current workspace see the
+rebased tree rather than leaving its existing `@` child on the old parent. If
+jj reports conflicts, resolve the conflict markers and run `jj status` before
+continuing.
+
+Confirm the published feature commit and its parent, then run the focused tests
+that this pin adds. These are the `t3` package's existing scripts and the seven
+OpenCode provider tests, not the full server test suite.
+
+```sh
+gh auth status
+gh api repos/averagechris/t3code/branches/opencode-v2 --jq .commit.sha
+gh api repos/averagechris/t3code/commits/opencode-v2 --jq '.parents[].sha'
+
+# Run from the T3 repository root.
+vp -C apps/server test run \
+  src/provider/Layers/OpenCodeAdapter.test.ts \
+  src/provider/Layers/OpenCodeProvider.test.ts \
+  src/provider/openCodeV2Client.test.ts \
+  src/provider/opencodeRuntime.environment.test.ts \
+  src/provider/opencodeRuntime.inventory.test.ts \
+  src/provider/opencodeRuntime.permissions.test.ts \
+  src/textGeneration/OpenCodeTextGeneration.test.ts
+vp run --filter t3 typecheck
+vp lint apps/server/src/provider apps/server/src/textGeneration
+pnpm --filter t3 run build:bundle
+```
+
+Review the result, then publish only the T3 bookmark. This procedure does not
+create a T3 pull request or change the Nix repository.
+
+```sh
+jj status
+jj git push --bookmark opencode-v2 --dry-run
+jj git push --bookmark opencode-v2
+```
+
+#### Update and verify the Nix pin
+
+Run this block in the Bay Nix feature workspace. Set
+`inputs.t3code-opencode-v2-src.url` in `flake.nix` to the full commit SHA
+reported by the T3 workspace, for example
+`github:averagechris/t3code/<full-sha>`. Then update only that flake input:
+
+Ensure this Nix workspace has an `upstream` remote before fetching. If it does
+not, add `https://github.com/LisaScheers/t3-code-nix.git` once with the same
+`jj git remote list` and `jj git remote add` check used above.
+
+```sh
+# Refresh the remote-tracking view of upstream without moving local `main`.
+jj git fetch --remote upstream --branch main
+jj log -r 'main@upstream ~ ancestors(opencode-v2-pin@origin)' -n 12 \
+  --no-pager --color=never
+
+# Carry the Nix feature stack onto latest upstream before updating the pin.
+jj git fetch --remote origin --branch opencode-v2-pin
+jj rebase -b opencode-v2-pin -d main@upstream
+jj status
+# Resolve any conflicts before continuing to the pin update or builds.
+
+nix flake update t3code-opencode-v2-src
+
+nix build --no-link \
+  .#packages.aarch64-darwin.opencode-v2 \
+  .#packages.aarch64-darwin.t3code-opencode-v2 \
+  .#packages.aarch64-darwin.t3code-server-opencode-v2
+# If a fixed-output hash changed, copy the reported "got" hash into
+# flake-parts/pkgs/default.nix and rerun the build.
+
+# Evaluate the Home Manager check on both declared Linux systems.
+nix eval --raw .#checks.aarch64-linux.home-module.drvPath
+nix eval --raw .#checks.x86_64-linux.home-module.drvPath
+
+# Confirm that the lock and fetched source name the same full revision.
+lock_rev="$(jq -r '.nodes."t3code-opencode-v2-src".locked.rev' flake.lock)"
+source_rev="$(nix eval --raw --impure --expr \
+  'let flake = builtins.getFlake (toString ./.); in flake.inputs.t3code-opencode-v2-src.rev')"
+test "$lock_rev" = "$source_rev"
+printf 't3code-opencode-v2-src: %s\n' "$lock_rev"
+
+nix flake check --all-systems --no-build --no-write-lock-file
+nix build --no-link --dry-run \
+  .#packages.aarch64-darwin.opencode-v2 \
+  .#packages.aarch64-darwin.t3code-opencode-v2 \
+  .#packages.aarch64-darwin.t3code-server-opencode-v2
+```
+
+The flake check also evaluates the Home Manager modules on Darwin. Its
+`opencode-v2` CI job builds these same three aarch64-darwin attributes, checks
+that the client and server versions match, checks the locked OpenCode version,
+and verifies that both wrappers contain `T3CODE_DISABLE_AUTO_UPDATE`.
+
+If there is no Nix drift, the rebase is a no-op when `opencode-v2-pin` is
+already based on the latest `main@upstream`; this does not mutate `main` or
+publish the feature branch.
+
+#### Open a Nix pull request
+
+Only after the local checks pass, create a Nix review bookmark from the existing
+`opencode-v2-pin@origin` base. Do this in a clean Bay Nix feature workspace. A
+pushed `opencode-v2-nix-refresh` bookmark is the only ref published by this
+block.
+
+```sh
+jj git fetch --remote origin --branch opencode-v2-pin
+jj new opencode-v2-pin@origin -m 'build(nix): refresh OpenCode 2 pin'
+
+# Restore only the verified Nix change. Set this to the change ID printed by
+# `jj log` in the workspace where the checks passed.
+: "${VERIFIED_NIX_CHANGE:?Set VERIFIED_NIX_CHANGE to that verified change ID}"
+jj restore --from "$VERIFIED_NIX_CHANGE" \
+  README.md flake.nix flake.lock flake-parts/pkgs/default.nix
+
+# Check the exact review diff against the fetched base. The first command
+# must print only the four paths restored above.
+jj diff --from opencode-v2-pin@origin --to @ --name-only
+jj diff --from opencode-v2-pin@origin --to @ --stat
+jj bookmark set opencode-v2-nix-refresh -r @
+nix flake check --all-systems --no-build --no-write-lock-file
+
+jj git push --bookmark opencode-v2-nix-refresh --dry-run
+jj git push --bookmark opencode-v2-nix-refresh
+gh pr create --base opencode-v2-pin --head opencode-v2-nix-refresh \
+  --title 'build(nix): refresh OpenCode 2 pin' \
+  --body 'Refresh the pinned OpenCode 2 T3 source commit.'
+```
+
+For a review branch that already exists, rebase its single commit onto the
+current `opencode-v2-pin@origin` bookmark instead of creating another bookmark:
+`jj rebase -r opencode-v2-nix-refresh -d opencode-v2-pin@origin`. Pushing that same
+bookmark updates its existing pull request; do not run `gh pr create` again.
+Do not enable auto-merge. The workflow evaluates this pull request on its
+`opencode-v2-pin` base branch.
