@@ -1,5 +1,5 @@
 # --- flake-parts/pkgs/default.nix
-{ inputs, ... }:
+{ inputs, self, ... }:
 {
   perSystem =
     { pkgs, system, ... }:
@@ -17,11 +17,21 @@
       opencodeV2 = pkgs.callPackage "${inputs.opencode-v2-src}/nix/opencode.nix" {
         node_modules = opencodeNodeModules;
       };
+      t3codeOpencodeV2 = self.lib.mkSourcePackages pkgs {
+        src = inputs.t3code-opencode-v2-src;
+        version = "0.0.42-opencode-v2";
+        pnpmHash = "sha256-3LSURCDRoASyO27aF0qjvdQkbtgLkjfsdDbHahotWGY=";
+        cargoHash = "sha256-5cmG2daM1bVOA23gjjoalbx0fEL1hmqV6WZov0sUZp8=";
+        pnpmVersion = "11.10.0";
+        electronVersion = "44.4.2";
+      };
     in
     {
       formatter = pkgs.nixfmt;
       packages = t3codePackages // {
         opencode-v2 = opencodeV2;
+        t3code-opencode-v2 = t3codeOpencodeV2.client;
+        t3code-server-opencode-v2 = t3codeOpencodeV2.server;
       };
     };
 }

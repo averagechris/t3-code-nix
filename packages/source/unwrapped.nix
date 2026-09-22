@@ -66,6 +66,27 @@ stdenv.mkDerivation (finalAttrs: {
     mkdir -p .generated/third-party-licenses/spdx/v3.28.0
     cp ${spdxLicenseData}/json/details/*.json \
       .generated/third-party-licenses/spdx/v3.28.0/
+
+    python3 - <<'PY'
+    import json
+    from pathlib import Path
+
+    path = Path("third-party-licenses.config.json")
+    config = json.loads(path.read_text())
+    existing = {entry["name"] for entry in config["packageOverrides"] if "name" in entry}
+    for name in ("@opencode/client", "@opencode/protocol", "@opencode/schema"):
+        if name not in existing:
+            config["packageOverrides"].append({
+                "name": name,
+                "license": "MIT",
+                "sourceUrl": "https://github.com/anomalyco/opencode",
+                "generatedNotice": {
+                    "licenseId": "MIT",
+                    "copyrights": ["Copyright (c) 2025 opencode"],
+                },
+            })
+    path.write_text(json.dumps(config, indent=2) + "\n")
+    PY
   '';
 
   nativeBuildInputs = [

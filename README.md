@@ -53,6 +53,11 @@ The package names are:
 | `t3code-nightly` | `t3code-server-nightly` | Nightly prebuilt |
 | `t3code-nightly-source` | `t3code-server-nightly-source` | Nightly source |
 
+The flake also pins the `averagechris/t3code` OpenCode 2 integration at
+`fa6679eea864a1e3b34807558e05db3a3f5c95f7`. Its matching source-built outputs
+are `t3code-opencode-v2` and `t3code-server-opencode-v2`; both come from that
+exact revision.
+
 ### Overlay
 
 ```nix
@@ -130,6 +135,28 @@ location.
 Provider CLIs are discovered through `PATH`. Add declaratively installed
 provider packages to `services.t3code.providerPackages`, or supply a package
 override that wraps the required tools.
+
+To use the pinned OpenCode 2 integration, override both packages together and
+add this flake's OpenCode 2.0.8 package to the service path:
+
+```nix
+{
+  programs.t3code = {
+    enable = true;
+    package = inputs.t3-code-nix.packages.${pkgs.system}.t3code-opencode-v2;
+  };
+  services.t3code = {
+    enable = true;
+    package = inputs.t3-code-nix.packages.${pkgs.system}.t3code-server-opencode-v2;
+    providerPackages = [
+      inputs.t3-code-nix.packages.${pkgs.system}.opencode-v2
+    ];
+  };
+}
+```
+
+Do not substitute `pkgs.opencode`; that package is the incompatible OpenCode 1
+provider. The wrappers and service both disable auto-update.
 
 When client and server are enabled in the same Home Manager configuration,
 evaluation rejects different versions. Prebuilt and source packages can be

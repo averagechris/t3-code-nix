@@ -17,6 +17,10 @@
       url = "github:anomalyco/opencode/v2.0.8";
       flake = false;
     };
+    t3code-opencode-v2-src = {
+      url = "github:averagechris/t3code/fa6679eea864a1e3b34807558e05db3a3f5c95f7";
+      flake = false;
+    };
   };
 
   # NOTE Here you can add additional binary cache substituers that you trust.

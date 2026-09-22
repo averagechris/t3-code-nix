@@ -143,7 +143,25 @@
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
         "opencode-v2-src": "opencode-v2-src",
-        "pre-commit-hooks": "pre-commit-hooks"
+        "pre-commit-hooks": "pre-commit-hooks",
+        "t3code-opencode-v2-src": "t3code-opencode-v2-src"
+      }
+    },
+    "t3code-opencode-v2-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790103281,
+        "narHash": "sha256-DOOzdQmz+hCpZXO5DdizZfjvW7AZxS2D3Hgah0gzNFk=",
+        "owner": "averagechris",
+        "repo": "t3code",
+        "rev": "fa6679eea864a1e3b34807558e05db3a3f5c95f7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "averagechris",
+        "repo": "t3code",
+        "rev": "fa6679eea864a1e3b34807558e05db3a3f5c95f7",
+        "type": "github"
       }
     }
   },
