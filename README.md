@@ -54,7 +54,7 @@ The package names are:
 | `t3code-nightly-source` | `t3code-server-nightly-source` | Nightly source |
 
 The flake also pins the `averagechris/t3code` OpenCode 2 integration at
-`fa6679eea864a1e3b34807558e05db3a3f5c95f7`. Its matching source-built outputs
+`915bb82de43acf2e362d4922dc80ad1e6ad22e6c`. Its matching source-built outputs
 are `t3code-opencode-v2` and `t3code-server-opencode-v2`; both come from that
 exact revision.
 
