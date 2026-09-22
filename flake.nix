@@ -18,7 +18,7 @@
       flake = false;
     };
     t3code-opencode-v2-src = {
-      url = "github:averagechris/t3code/915bb82de43acf2e362d4922dc80ad1e6ad22e6c";
+      url = "github:averagechris/t3code/e9ff00018cd91244875e21214be89a15b01a67d7";
       flake = false;
     };
   };

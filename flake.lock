@@ -150,17 +150,17 @@
     "t3code-opencode-v2-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1790108312,
-        "narHash": "sha256-Ut0O/RYZLC4LFsm2GEbYrZRAL63sWrmkid89bXEtUA8=",
+        "lastModified": 1790118464,
+        "narHash": "sha256-wlJObbear0+PF9MJbEXKFatuLPLzfZaCAMTfgxzGnU0=",
         "owner": "averagechris",
         "repo": "t3code",
-        "rev": "915bb82de43acf2e362d4922dc80ad1e6ad22e6c",
+        "rev": "e9ff00018cd91244875e21214be89a15b01a67d7",
         "type": "github"
       },
       "original": {
         "owner": "averagechris",
         "repo": "t3code",
-        "rev": "915bb82de43acf2e362d4922dc80ad1e6ad22e6c",
+        "rev": "e9ff00018cd91244875e21214be89a15b01a67d7",
         "type": "github"
       }
     }

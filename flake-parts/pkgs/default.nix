@@ -20,7 +20,7 @@
       t3codeOpencodeV2 = self.lib.mkSourcePackages pkgs {
         src = inputs.t3code-opencode-v2-src;
         version = "0.0.42-opencode-v2";
-        pnpmHash = "sha256-3LSURCDRoASyO27aF0qjvdQkbtgLkjfsdDbHahotWGY=";
+        pnpmHash = "sha256-vE1+H8TG8MG+1HVvc9RTWp3Y+54rQurbQwoGAY/9nEo=";
         cargoHash = "sha256-5cmG2daM1bVOA23gjjoalbx0fEL1hmqV6WZov0sUZp8=";
         pnpmVersion = "11.10.0";
         electronVersion = "44.4.2";
