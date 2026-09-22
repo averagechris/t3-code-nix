@@ -101,6 +101,23 @@
         "type": "github"
       }
     },
+    "opencode-v2-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789722745,
+        "narHash": "sha256-9sZ8akR8S4U7Ff0H+CbpGxbFu2U043aKCCx306TOUGs=",
+        "owner": "anomalyco",
+        "repo": "opencode",
+        "rev": "7673ed6bd6547ee0dcb81aab55f1392fb751d652",
+        "type": "github"
+      },
+      "original": {
+        "owner": "anomalyco",
+        "ref": "v2.0.8",
+        "repo": "opencode",
+        "type": "github"
+      }
+    },
     "pre-commit-hooks": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -125,6 +142,7 @@
         "flake-parts": "flake-parts",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
+        "opencode-v2-src": "opencode-v2-src",
         "pre-commit-hooks": "pre-commit-hooks"
       }
     }
