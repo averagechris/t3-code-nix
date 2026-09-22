@@ -13,6 +13,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
+    opencode-v2-src = {
+      url = "github:anomalyco/opencode/v2.0.8";
+      flake = false;
+    };
   };
 
   # NOTE Here you can add additional binary cache substituers that you trust.

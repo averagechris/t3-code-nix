@@ -114,6 +114,7 @@ Run the server as a Linux systemd user service or macOS launch agent:
     host = "127.0.0.1";
     port = 3773;
     providerPackages = [
+      inputs.t3-code-nix.packages.${pkgs.system}.opencode-v2
       pkgs.codex
       pkgs.claude-code
     ];
@@ -183,8 +184,7 @@ the web client and server protocol in sync:
         programs.t3code.package = custom.client;
         services.t3code = {
           package = custom.server;
-          # This package must provide an OpenCode 2 CLI.
-          providerPackages = [ pkgs.opencode ];
+          providerPackages = [ t3-code-nix.packages.${pkgs.system}.opencode-v2 ];
         };
       };
     };
